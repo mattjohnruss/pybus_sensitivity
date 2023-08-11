@@ -2,8 +2,7 @@ library(deSolve)
 library(magrittr)
 library(ggplot2)
 library(data.table)
-library(sensitivity)
-library(randtoolbox)
+library(sensobol)
 library(cowplot)
 
 theme_set(theme_cowplot() + background_grid())
@@ -66,39 +65,6 @@ eqns <- function(t, state, parameters) {
   })
 }
 
-# Uses independent uniform samples for each param
-gen_param_sample <- function(n_rep, names, mins, maxs) {
-  d <- list()
-  for (i in seq_len(length(names))) {
-    d[[i]] <- data.table(
-      id = seq_len(n_rep),
-      param = rep(names[i], n_rep),
-      value = runif(n_rep, mins[i], maxs[i])
-    )
-  }
-  d <- d %>%
-    data.table::rbindlist(.) %>%
-    dcast(., id ~ param) %>%
-    .[, id := NULL]
-  data.table::setcolorder(d, names)
-  return(d)
-}
-
-# Uses Sobol sequence for all params together
-gen_param_sample_sobol <- function(n_rep, min_max, init = TRUE) {
-  d <- randtoolbox::sobol(n_rep, nrow(min_max), init) %>%
-    as.data.table
-  names(d) <- min_max$param
-  d <- melt(d, measure.vars = min_max$param, variable.name = "param") %>%
-    .[min_max, on = "param"] %>%
-    .[, value := min + value * (max - min)] %>%
-    .[, min := NULL] %>%
-    .[, max := NULL] %>%
-    .[, id := seq_len(.N), by = param] %>%
-    dcast(., id ~ param, value.var = "value") %>%
-    .[, id := NULL]
-}
-
 rootfun <- function(t, state, parameters) {
   with(as.list(state), {
     c_f - 0.5
@@ -156,26 +122,28 @@ param_min_max[, mid := NULL]
 # -----
 
 # Generate random parameter samples
-x_1 <- gen_param_sample_sobol(1000, param_min_max)
-x_2 <- gen_param_sample_sobol(1000, param_min_max, init = FALSE)
-x <- sobolmartinez(model = NULL, X1 = x_1, X2 = x_2)
+n_param_sample <- 1000
+
+# Create the parameter sample and Sobol matrices
+param_sample <- sobol_matrices(
+  N = n_param_sample,
+  params = param_min_max[, param]
+)
+
+# Rescale the values from U(0, 1) -> U(min, max)
+for (i in seq_along(param_min_max[, param])) {
+  min <- param_min_max[i, min]
+  max <- param_min_max[i, max]
+  name <- param_min_max[i, param]
+  param_sample[, name] <- qunif(param_sample[, name], min, max)
+}
+
+param_sample_dt <- data.table(param_sample)
 
 # Compute solutions
-solutions <- solution_sample(x$X, use_rootfun = FALSE)
-x$X[, rep := seq_len(.N)]
+solutions <- solution_sample(param_sample_dt, use_rootfun = FALSE)
+param_sample_dt[, rep := seq_len(.N)]
 s_wide <- dcast(solutions, ... ~ var)
-
-# Find the max value of p + c after challenge, and the time
-s_max_p_plus_c <- s_wide[
-  s_wide[time > k_ts * k_phia, .I[p + c == max(p + c)], by = rep]$V1
-] %>%
-  .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = (p + c) / (p_steady + c_steady))]
-
-# Find the max value of m after challenge, and the time
-s_max_m <- s_wide[
-  s_wide[time > k_ts * k_phia, .I[m == max(m)], by = rep]$V1
-] %>%
-  .[, .(rep, t_max_m = time, max_m = m / m_steady)]
 
 # Calculate the solution at steady state (assumed to be t = k_ts * k_phia, i.e.
 # just before challenge)
@@ -189,10 +157,24 @@ steady <- solutions[
     c("a_steady", "p_steady", "c_steady", "m_steady")
   )
 
+# Add the steady solutions to s_wide, used for scaling unsteady solutions below
+s_wide <- s_wide[steady, on = "rep"]
+
+# Find the max value of p + c after challenge, and the time
+s_max_p_plus_c <- s_wide[
+  s_wide[time > k_ts * k_phia, .I[p + c == max(p + c)], by = rep]$V1
+] %>%
+  .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = (p + c) / (p_steady + c_steady))]
+
+# Find the max value of m after challenge, and the time
+s_max_m <- s_wide[
+  s_wide[time > k_ts * k_phia, .I[m == max(m)], by = rep]$V1
+] %>%
+  .[, .(rep, t_max_m = time, max_m = m / m_steady)]
+
 # Add the maxes to s_wide (via chained joins) - these are qois but are also
 # needed for calculating the time to reach 1/2 max below
-s_wide <- s_wide[steady, on = "rep"] %>%
-  .[s_max_p_plus_c, on = "rep"] %>%
+s_wide <- s_wide[s_max_p_plus_c, on = "rep"] %>%
   .[s_max_m, on = "rep"]
 
 # Calculate time p + c reaches 1/2 of its max, relative to its steady value
@@ -213,26 +195,58 @@ t_m_half_max <- s_wide[time > t_max_m, .SD, by = rep] %>%
 qois <- s_max_p_plus_c[s_max_m, on = "rep"] %>%
   .[t_p_plus_c_half_max, on = "rep"] %>%
   .[t_m_half_max, on = "rep"] %>%
-  .[x$X, on = "rep"]
+  .[param_sample_dt, on = "rep"]
 
 # Indices for max(p + c)
-tell(x, qois[, max_p_plus_c])
-p_sobol_max_p_plus_c <- ggplot(x)
+ind <- sobol_indices(
+  Y = qois[, max_p_plus_c],
+  N = n_param_sample,
+  params = param_min_max[, param],
+  boot = TRUE,
+  R = 100,
+  parallel = "multicore",
+  ncpus = 8
+)
+p_sobol_max_p_plus_c <- plot(ind)
 ggsave(plot = p_sobol_max_p_plus_c, "plots/sobol_max_p_plus_c_n=1000.pdf")
 
 # Indices for max(m)
-tell(x, qois[, max_m])
-p_sobol_max_m <- ggplot(x)
+ind <- sobol_indices(
+  Y = qois[, max_m],
+  N = n_param_sample,
+  params = param_min_max[, param],
+  boot = TRUE,
+  R = 100,
+  parallel = "multicore",
+  ncpus = 8
+)
+p_sobol_max_m <- plot(ind)
 ggsave(plot = p_sobol_max_m, "plots/sobol_max_m_n=1000.pdf")
 
 # Indices for time until half max(p + c)
-tell(x, qois[, t_p_plus_c_half_max])
-p_sobol_t_p_plus_c_half_max <- ggplot(x)
+ind <- sobol_indices(
+  Y = qois[, t_p_plus_c_half_max],
+  N = n_param_sample,
+  params = param_min_max[, param],
+  boot = TRUE,
+  R = 100,
+  parallel = "multicore",
+  ncpus = 8
+)
+p_sobol_t_p_plus_c_half_max <- plot(ind)
 ggsave(plot = p_sobol_t_p_plus_c_half_max, "plots/sobol_t_p_plus_c_half_max_n=1000.pdf") # nolint
 
 # Indices for time until half max(m)
-tell(x, qois[, t_m_half_max])
-p_sobol_t_m_half_max <- ggplot(x)
+ind <- sobol_indices(
+  Y = qois[, t_m_half_max],
+  N = n_param_sample,
+  params = param_min_max[, param],
+  boot = TRUE,
+  R = 100,
+  parallel = "multicore",
+  ncpus = 8
+)
+p_sobol_t_m_half_max <- plot(ind)
 ggsave(plot = p_sobol_t_m_half_max, "plots/sobol_t_m_half_max_n=1000.pdf")
 
 # Other plots
