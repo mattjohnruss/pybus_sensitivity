@@ -169,13 +169,13 @@ s_wide <- dcast(solutions, ... ~ var)
 s_max_p_plus_c <- s_wide[
   s_wide[time > k_ts * k_phia, .I[p + c == max(p + c)], by = rep]$V1
 ] %>%
-  .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = p + c)]
+  .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = (p + c) / (p_steady + c_steady))]
 
 # Find the max value of m after challenge, and the time
 s_max_m <- s_wide[
   s_wide[time > k_ts * k_phia, .I[m == max(m)], by = rep]$V1
 ] %>%
-  .[, .(rep, t_max_m = time, max_m = m)]
+  .[, .(rep, t_max_m = time, max_m = m / m_steady)]
 
 # Calculate the solution at steady state (assumed to be t = k_ts * k_phia, i.e.
 # just before challenge)
