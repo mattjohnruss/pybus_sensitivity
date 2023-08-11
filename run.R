@@ -145,9 +145,12 @@ solution_sample <- function(params_sample, use_rootfun = TRUE) {
 
 param_min_max <- data.table(
   param = c("k1", "k2",   "k3",  "k4",  "k5",   "k10", "k11",   "k17", "ks", "ku"), # nolint
-  min   = c(0.20, 1.6534, 1.374, 2.304, 0.1265, 1.168, 0.17129, 0.09,  0.0,  3.09), # nolint
-  max   = c(0.22, 1.6734, 1.394, 2.324, 0.1465, 1.188, 0.19129, 0.11,  12.0, 3.11)  # nolint
+  mid   = c(0.21, 1.6634, 1.384, 2.314, 0.1365, 1.178, 0.18129, 0.1,   0.0,  3.1) # nolint
 )
+param_min_max[, c("min", "max") := list((1 - 0.05) * mid, 1.05 * mid)]
+param_min_max[param == "ks", min := 0]
+param_min_max[param == "ks", max := 12]
+param_min_max[, mid := NULL]
 
 # Sobol
 # -----
