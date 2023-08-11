@@ -239,9 +239,13 @@ ggsave(plot = p_sobol_t_m_half_max, "plots/sobol_t_m_half_max_n=1000.pdf")
 # -----------
 
 # Full solutions (rootfun must be disabled so integration doesn't stop early)
-ggplot(solutions[rep %in% 1:100], aes(x = time, y = value, group = rep)) +
+p_solutions <- ggplot(
+  solutions[rep %in% 1:100], aes(x = time, y = value, group = rep)
+) +
   geom_line(alpha = 0.3) +
   facet_wrap(vars(var), scales = "free")
+
+ggsave(plot = p_solutions, "plots/solutions_n=1000.pdf")
 
 # Just p + c, zoomed on y axis
 ggplot(s_wide[rep %in% 1:1000], aes(x = time, y = p + c, group = rep)) +
