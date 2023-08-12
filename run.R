@@ -32,11 +32,7 @@ solution_sample <- function(param_sample_dt) {
       initfunc = "initmod"
     ))
   }, mc.cores = detectCores()) %>%
-    rbindlist(idcol = "rep") %>%
-    melt(
-      measure.vars = c("a", "p", "c", "m"),
-      variable.name = "var"
-    )
+    rbindlist(idcol = "rep")
 }
 
 gen_param_sample_sobol <- function(n_rep, min_max) {
@@ -76,42 +72,37 @@ param_sample_dt <- gen_param_sample_sobol(n_param_sample, param_min_max)
 # Compute solutions
 solutions <- solution_sample(param_sample_dt)
 param_sample_dt[, rep := seq_len(.N)]
-s_wide <- dcast(solutions, ... ~ var)
 
-# Calculate the solution at steady state (assumed to be t = k_ts * k_phia, i.e.
+# Calculate the solution at steady state (assumed to be t = k_ts * k_phi_a, i.e.
 # just before challenge)
-steady <- solutions[
-  time == k_ts * k_phia,
-  .(rep, var, steady_value = value)
-] %>%
-  dcast(... ~ var, value.var = "steady_value") %>%
+steady <- solutions[time == k_ts * k_phi_a, -"time"] %>%
   setnames(
     c("a", "p", "c", "m"),
     c("a_steady", "p_steady", "c_steady", "m_steady")
   )
 
-# Add the steady solutions to s_wide, used for scaling unsteady solutions below
-s_wide <- s_wide[steady, on = "rep"]
+# Add the steady solutions, used for scaling unsteady solutions below
+solutions <- solutions[steady, on = c("rep")]
 
 # Find the max value of p + c after challenge, and the time
-s_max_p_plus_c <- s_wide[
-  s_wide[time > k_ts * k_phia, .I[p + c == max(p + c)], by = rep]$V1
+s_max_p_plus_c <- solutions[
+  solutions[time > k_ts * k_phi_a, .I[p + c == max(p + c)], by = rep]$V1
 ] %>%
   .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = (p + c) / (p_steady + c_steady))]
 
 # Find the max value of m after challenge, and the time
-s_max_m <- s_wide[
-  s_wide[time > k_ts * k_phia, .I[m == max(m)], by = rep]$V1
+s_max_m <- solutions[
+  solutions[time > k_ts * k_phi_a, .I[m == max(m)], by = rep]$V1
 ] %>%
   .[, .(rep, t_max_m = time, max_m = m / m_steady)]
 
-# Add the maxes to s_wide (via chained joins) - these are qois but are also
+# Add the maxes (via chained joins) - these are qois but are also
 # needed for calculating the time to reach 1/2 max below
-s_wide <- s_wide[s_max_p_plus_c, on = "rep"] %>%
+solutions <- solutions[s_max_p_plus_c, on = "rep"] %>%
   .[s_max_m, on = "rep"]
 
 # Calculate time p + c reaches 1/2 of its max, relative to its steady value
-t_p_plus_c_half_max <- s_wide[time > t_max_p_plus_c, .SD, by = rep] %>%
+t_p_plus_c_half_max <- solutions[time > t_max_p_plus_c, .SD, by = rep] %>%
   .[
     ((p + c) - (p_steady + c_steady)) <= 0.5 * (max_p_plus_c - (p_steady + c_steady)), # nolint
     first(.SD),
@@ -120,7 +111,7 @@ t_p_plus_c_half_max <- s_wide[time > t_max_p_plus_c, .SD, by = rep] %>%
   .[, .(rep, t_p_plus_c_half_max = time)]
 
 # Calculate time m reaches 1/2 of its max, relative to its steady value
-t_m_half_max <- s_wide[time > t_max_m, .SD, by = rep] %>%
+t_m_half_max <- solutions[time > t_max_m, .SD, by = rep] %>%
   .[(m - m_steady) <= 0.5 * (max_m - m_steady), first(.SD), by = rep] %>%
   .[, .(rep, t_m_half_max = time)]
 
@@ -186,22 +177,22 @@ ggsave(plot = p_sobol_t_m_half_max, "plots/sobol_t_m_half_max_n=1000.pdf")
 # -----------
 
 # Full solutions
-p_solutions <- ggplot(
-  solutions[rep %in% 1:100], aes(x = time, y = value, group = rep)
-) +
+p_solutions <- solutions[rep %in% sample(rep, 200)] %>%
+  melt(measure.vars = c("a", "p", "c", "m"), id.vars = c("rep", "time")) %>%
+  ggplot(aes(x = time, y = value, group = rep)) +
   geom_line(alpha = 0.3) +
-  facet_wrap(vars(var), scales = "free")
+  facet_wrap(vars(variable), scales = "free")
 
 ggsave(plot = p_solutions, "plots/solutions_n=1000.pdf")
 
 # Just p + c, zoomed on y axis
-ggplot(s_wide[rep %in% 1:1000], aes(x = time, y = p + c, group = rep)) +
+ggplot(solutions[rep %in% 1:1000], aes(x = time, y = p + c, group = rep)) +
   geom_line(alpha = 0.15) # +
   #xlim(c(9000, 11000)) +
   #ylim(c(0, 0.25))
 
 # Just m, zoomed on y axis
-ggplot(s_wide[rep %in% 1:1000], aes(x = time, y = m, group = rep)) +
+ggplot(solutions[rep %in% 1:1000], aes(x = time, y = m, group = rep)) +
   geom_line(alpha = 0.15) # +
   #ylim(c(0, 2))
 
