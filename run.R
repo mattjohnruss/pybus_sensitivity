@@ -7,63 +7,12 @@ library(cowplot)
 
 theme_set(theme_cowplot() + background_grid())
 
-# define these globally so they can be used in `eqns` and the solver function
-k_ts <- 100
-k_phia <- 10
+# Compile and load the equations
+system("R CMD SHLIB eqns.c")
+dyn.load("eqns.so")
 
-# 17, 18, etc in days
-# k_phia scaling from nondimensionalisation
-ti_vec <- (c(17, 18, 19, 20, 21, 22, 24, 26, 28, 33) + k_ts) * k_phia
-
-eqns <- function(t, state, parameters) {
-  with(as.list(c(state, parameters)), {
-    #k1 <- parameters[1] #0.157 ka
-    #k2 <- parameters[2] #1.165 kac
-    #k3 <- parameters[3] #1.384 nac
-    #k4 <- parameters[4] #2.314 kb
-    #k5 <- parameters[5] #0.1325 % kp
-    k6 <- 1.064 # pmax k(11)
-    k7 <- 17.3 # kap k(12)
-    k8 <- 0.165 # nap k(13)
-    k9 <- 0.063 # kcp k(14)
-    #k10 <- parameters[6] #1.17 % kpc
-    #k11 <- parameters[7] #0.3275 % phic
-    k12 <- 0.001 # phicm k(15)
-    k13 <- 1.0 # ncm k(16)
-    k14 <- 0.0001 # kcm k(17)
-    k15 <- 0.001 # kacm k(18)
-    k16 <- 1.0 # nacm k(19)
-    #k17 <- parameters[8]#0.1 kpm
-    k18 <- 0.1 # kapm k(20)
-    k19 <- 10.0 # napm k(21)
-    k20 <- 0.001 # ke k(22)
-    k21 <- 1.0 # ne k(23)
-    k22 <- 0.00545 # phim k(24)
-    #ks <- parameters[9]#2.64 ks
-    #ku <- parameters[10]#30 v
-    rhoa <- 0.01
-    rhop <- 1
-    rhoc <- 1
-    rhom <- 1
-
-    k_stim <- 0
-    for (i in seq_len(length(ti_vec))) {
-      k_stim <- k_stim +
-        (ks / (ku * sqrt(2 * pi))) * exp(-0.5 * ((t - ti_vec[i]) / ku)^2)
-    }
-
-    da_dt <- k1 + (k_stim + k2 * a * c / (k3 + a * c)) * c * m * rhom / rhoa -
-      k4 * ((rhop / rhoc) * p + c) * a - a
-    dp_dt <- k5 * (1 - p / k6) * (1 + k7 * a * p / (k8 + a * p)) * p +
-      (k9 * rhoc / rhop) * c - k10 * p
-    dc_dt <- (k10 * rhoc / rhop) * p - k9 * c -
-      (k11 * c - k12 * m / (k13 + m)) * c
-    dm_dt <- (k14 + k15 * a * c / (k16 + a * c)) * rhoc * c / rhom +
-      (k17 + k18 * a * p / (k19 + a * p)) * rhop * p / rhom +
-      k20 * a / (k21 + a) - k22 * m
-    list(c(da_dt, dp_dt, dc_dt, dm_dt))
-  })
-}
+k_ts <- 100.0
+k_phi_a <- 10.0
 
 solution_sample <- function(params_sample) {
   times <- seq(0, (100 + k_ts) * k_phia, length.out = 1001)
@@ -77,8 +26,10 @@ solution_sample <- function(params_sample) {
       ode(
         y = ics,
         times = times,
-        func = eqns,
-        parms = p[rep]
+        func = "derivs",
+        parms = p[rep],
+        dllname = "eqns",
+        initfunc = "initmod"
       )
     ),
     by = rep

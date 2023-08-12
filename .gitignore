@@ -1,3 +1,5 @@
 plots/
 .RData
 todo
+*.o
+*.so
