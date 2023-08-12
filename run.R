@@ -65,13 +65,7 @@ eqns <- function(t, state, parameters) {
   })
 }
 
-rootfun <- function(t, state, parameters) {
-  with(as.list(state), {
-    c_f - 0.5
-  })
-}
-
-solution_sample <- function(params_sample, use_rootfun = TRUE) {
+solution_sample <- function(params_sample) {
   times <- seq(0, (100 + k_ts) * k_phia, length.out = 1001)
   ics <- c(a = 0.19, p = 0.005, c = 0.07, m = 0.12)
 
@@ -80,26 +74,14 @@ solution_sample <- function(params_sample, use_rootfun = TRUE) {
 
   p <- p[,
     as.data.table(
-      if (use_rootfun) {
-        ode(
-          y = ics,
-          times = times,
-          func = eqns,
-          parms = p[rep],
-          #method = "ode45",
-          rootfun = rootfun#,
-          #hmax = 0.1
-        )
-      } else {
-        ode(
-          y = ics,
-          times = times,
-          func = eqns,
-          #method = "ode45",
-          parms = p[rep]#,
-          #hmax = 0.1
-        )
-      }
+      ode(
+        y = ics,
+        times = times,
+        func = eqns,
+        #method = "ode45",
+        parms = p[rep]#,
+        #hmax = 0.1
+      )
     ),
     by = rep
   ] %>%
@@ -141,7 +123,7 @@ for (i in seq_along(param_min_max[, param])) {
 param_sample_dt <- data.table(param_sample)
 
 # Compute solutions
-solutions <- solution_sample(param_sample_dt, use_rootfun = FALSE)
+solutions <- solution_sample(param_sample_dt)
 param_sample_dt[, rep := seq_len(.N)]
 s_wide <- dcast(solutions, ... ~ var)
 
@@ -252,7 +234,7 @@ ggsave(plot = p_sobol_t_m_half_max, "plots/sobol_t_m_half_max_n=1000.pdf")
 # Other plots
 # -----------
 
-# Full solutions (rootfun must be disabled so integration doesn't stop early)
+# Full solutions
 p_solutions <- ggplot(
   solutions[rep %in% 1:100], aes(x = time, y = value, group = rep)
 ) +
