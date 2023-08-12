@@ -39,6 +39,24 @@ solution_sample <- function(param_sample_dt) {
     )
 }
 
+gen_param_sample_sobol <- function(n_rep, min_max) {
+  # Create the parameter sample and Sobol matrices
+  param_sample <- sobol_matrices(
+    N = n_rep,
+    params = min_max[, param]
+  )
+
+  # Rescale the values from U(0, 1) -> U(min, max)
+  for (i in seq_along(min_max[, param])) {
+    min <- min_max[i, min]
+    max <- min_max[i, max]
+    name <- min_max[i, param]
+    param_sample[, name] <- qunif(param_sample[, name], min, max)
+  }
+
+  data.table(param_sample)
+}
+
 param_min_max <- data.table(
   param = c("k1", "k2",   "k3",  "k4",  "k5",   "k10", "k11",   "k17", "ks", "ku"), # nolint
   mid   = c(0.21, 1.6634, 1.384, 2.314, 0.1365, 1.178, 0.18129, 0.1,   0.0,  3.1) # nolint
@@ -53,22 +71,7 @@ param_min_max[, mid := NULL]
 
 # Generate random parameter samples
 n_param_sample <- 1000
-
-# Create the parameter sample and Sobol matrices
-param_sample <- sobol_matrices(
-  N = n_param_sample,
-  params = param_min_max[, param]
-)
-
-# Rescale the values from U(0, 1) -> U(min, max)
-for (i in seq_along(param_min_max[, param])) {
-  min <- param_min_max[i, min]
-  max <- param_min_max[i, max]
-  name <- param_min_max[i, param]
-  param_sample[, name] <- qunif(param_sample[, name], min, max)
-}
-
-param_sample_dt <- data.table(param_sample)
+param_sample_dt <- gen_param_sample_sobol(n_param_sample, param_min_max)
 
 # Compute solutions
 solutions <- solution_sample(param_sample_dt)
