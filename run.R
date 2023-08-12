@@ -4,6 +4,7 @@ library(ggplot2)
 library(data.table)
 library(sensobol)
 library(cowplot)
+library(parallel)
 
 theme_set(theme_cowplot() + background_grid())
 
@@ -14,26 +15,24 @@ dyn.load("eqns.so")
 k_ts <- 100.0
 k_phi_a <- 10.0
 
-solution_sample <- function(params_sample) {
-  times <- seq(0, (100 + k_ts) * k_phia, length.out = 1001)
+solution_sample <- function(param_sample_dt) {
+  times <- seq(0, (100 + k_ts) * k_phi_a, length.out = 1001)
   ics <- c(a = 0.19, p = 0.005, c = 0.07, m = 0.12)
 
-  p <- copy(params_sample)
-  p[, rep := .I]
+  p <- as.list(as.data.table(t(param_sample_dt)))
+  names(p) <- NULL
 
-  p <- p[,
-    as.data.table(
-      ode(
-        y = ics,
-        times = times,
-        func = "derivs",
-        parms = p[rep],
-        dllname = "eqns",
-        initfunc = "initmod"
-      )
-    ),
-    by = rep
-  ] %>%
+  mclapply(p, \(params) {
+    as.data.table(ode(
+      y = ics,
+      times = times,
+      func = "derivs",
+      parms = params,
+      dllname = "eqns",
+      initfunc = "initmod"
+    ))
+  }, mc.cores = detectCores()) %>%
+    rbindlist(idcol = "rep") %>%
     melt(
       measure.vars = c("a", "p", "c", "m"),
       variable.name = "var"
