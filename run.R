@@ -78,9 +78,7 @@ solution_sample <- function(params_sample) {
         y = ics,
         times = times,
         func = eqns,
-        #method = "ode45",
-        parms = p[rep]#,
-        #hmax = 0.1
+        parms = p[rep]
       )
     ),
     by = rep
