@@ -132,7 +132,10 @@ ind <- sobol_indices(
   ncpus = 8
 )
 p_sobol_max_p_plus_c <- plot(ind)
-ggsave(plot = p_sobol_max_p_plus_c, "plots/sobol_max_p_plus_c_n=1000.pdf")
+ggsave(
+  plot = p_sobol_max_p_plus_c,
+  paste0("plots/sobol_max_p_plus_c_n=", n_param_sample, ".pdf")
+)
 
 # Indices for max(m)
 ind <- sobol_indices(
@@ -145,7 +148,10 @@ ind <- sobol_indices(
   ncpus = 8
 )
 p_sobol_max_m <- plot(ind)
-ggsave(plot = p_sobol_max_m, "plots/sobol_max_m_n=1000.pdf")
+ggsave(
+  plot = p_sobol_max_m,
+  paste0("plots/sobol_max_m_n=", n_param_sample, ".pdf")
+)
 
 # Indices for time until half max(p + c)
 ind <- sobol_indices(
@@ -158,7 +164,10 @@ ind <- sobol_indices(
   ncpus = 8
 )
 p_sobol_t_p_plus_c_half_max <- plot(ind)
-ggsave(plot = p_sobol_t_p_plus_c_half_max, "plots/sobol_t_p_plus_c_half_max_n=1000.pdf") # nolint
+ggsave(
+  plot = p_sobol_t_p_plus_c_half_max,
+  paste0("plots/sobol_t_p_plus_c_half_max_n=", n_param_sample, ".pdf")
+)
 
 # Indices for time until half max(m)
 ind <- sobol_indices(
@@ -171,7 +180,10 @@ ind <- sobol_indices(
   ncpus = 8
 )
 p_sobol_t_m_half_max <- plot(ind)
-ggsave(plot = p_sobol_t_m_half_max, "plots/sobol_t_m_half_max_n=1000.pdf")
+ggsave(
+  plot = p_sobol_t_m_half_max,
+  paste0("plots/sobol_t_m_half_max_n=", n_param_sample, ".pdf")
+)
 
 # Other plots
 # -----------
@@ -183,7 +195,10 @@ p_solutions <- solutions[rep %in% sample(rep, 200)] %>%
   geom_line(alpha = 0.3) +
   facet_wrap(vars(variable), scales = "free")
 
-ggsave(plot = p_solutions, "plots/solutions_n=1000.pdf")
+ggsave(
+  plot = p_solutions,
+  paste0("plots/solutions_n=", n_param_sample, ".pdf")
+)
 
 # Just p + c, zoomed on y axis
 ggplot(solutions[rep %in% 1:1000], aes(x = time, y = p + c, group = rep)) +
@@ -214,7 +229,7 @@ p_max_p_plus_c_vs_params <- ggplot(
   facet_wrap(vars(param), scales = "free")
 ggsave(
   plot = p_max_p_plus_c_vs_params,
-  "plots/max_p_plus_c_vs_params_n=1000.png",
+  paste0("plots/max_p_plus_c_vs_params_n=", n_param_sample, ".pdf"),
   dpi = 100,
   bg = "white"
 )
@@ -227,12 +242,12 @@ p_max_m_vs_params <- ggplot(
   facet_wrap(vars(param), scales = "free")
 ggsave(
   plot = p_max_m_vs_params,
-  "plots/max_m_vs_params_n=1000.png",
+  paste0("plots/max_m_vs_params_n=", n_param_sample, ".pdf"),
   dpi = 100,
   bg = "white"
 )
 
-p_t_p_plus_c_half_max_vs_params <- ggplot( # nolint
+p_t_p_plus_c_half_max_vs_params <- ggplot(
   qois_param_long,
   aes(x = param_value, y = t_p_plus_c_half_max)
 ) +
@@ -240,7 +255,7 @@ p_t_p_plus_c_half_max_vs_params <- ggplot( # nolint
   facet_wrap(vars(param), scales = "free")
 ggsave(
   plot = p_t_p_plus_c_half_max_vs_params,
-  "plots/t_p_plus_c_half_max_vs_params=1000.png",
+  paste0("plots/t_p_plus_c_half_max_vs_params=", n_param_sample, ".pdf"),
   dpi = 100,
   bg = "white"
 )
@@ -253,7 +268,7 @@ p_t_m_half_max_vs_params <- ggplot(
   facet_wrap(vars(param), scales = "free")
 ggsave(
   plot = p_t_m_half_max_vs_params,
-  "plots/t_m_half_max_vs_params=1000.png",
+  paste0("plots/t_m_half_max_vs_params=", n_param_sample, ".pdf"),
   dpi = 100,
   bg = "white"
 )
