@@ -219,7 +219,7 @@ qois_param_long <- melt(
 )
 
 p_max_p_plus_c_vs_params <- ggplot(
-  qois_param_long,
+  qois_param_long[rep %in% sample(rep, 3000)],
   aes(x = param_value, y = max_p_plus_c)
 ) +
   geom_point(size = 0.4, alpha = 0.5) +
@@ -232,7 +232,7 @@ ggsave(
 )
 
 p_max_m_vs_params <- ggplot(
-  qois_param_long,
+  qois_param_long[rep %in% sample(rep, 3000)],
   aes(x = param_value, y = max_m)
 ) +
   geom_point(size = 0.4, alpha = 0.5) +
@@ -245,7 +245,7 @@ ggsave(
 )
 
 p_t_p_plus_c_half_max_vs_params <- ggplot(
-  qois_param_long,
+  qois_param_long[rep %in% sample(rep, 3000)],
   aes(x = param_value, y = t_p_plus_c_half_max)
 ) +
   geom_point(size = 0.4, alpha = 0.5) +
@@ -258,7 +258,7 @@ ggsave(
 )
 
 p_t_m_half_max_vs_params <- ggplot(
-  qois_param_long,
+  qois_param_long[rep %in% sample(rep, 3000)],
   aes(x = param_value, y = t_m_half_max)
 ) +
   geom_point(size = 0.4, alpha = 0.5) +
