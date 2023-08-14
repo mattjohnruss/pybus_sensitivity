@@ -200,16 +200,13 @@ ggsave(
   paste0("plots/solutions_n=", n_param_sample, ".pdf")
 )
 
-# Just p + c, zoomed on y axis
-ggplot(solutions[rep %in% 1:1000], aes(x = time, y = p + c, group = rep)) +
-  geom_line(alpha = 0.15) # +
-  #xlim(c(9000, 11000)) +
-  #ylim(c(0, 0.25))
+## Just p + c, zoomed on y axis
+#ggplot(solutions[rep %in% 1:1000], aes(x = time, y = p + c, group = rep)) +
+  #geom_line(alpha = 0.15)
 
-# Just m, zoomed on y axis
-ggplot(solutions[rep %in% 1:1000], aes(x = time, y = m, group = rep)) +
-  geom_line(alpha = 0.15) # +
-  #ylim(c(0, 2))
+## Just m, zoomed on y axis
+#ggplot(solutions[rep %in% 1:1000], aes(x = time, y = m, group = rep)) +
+  #geom_line(alpha = 0.15)
 
 # Plot qois vs params
 
