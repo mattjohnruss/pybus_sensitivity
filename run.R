@@ -253,7 +253,7 @@ p_t_p_plus_c_half_max_vs_params <- ggplot(
   facet_wrap(vars(param), scales = "free")
 ggsave(
   plot = p_t_p_plus_c_half_max_vs_params,
-  paste0("plots/t_p_plus_c_half_max_vs_params=", n_param_sample, ".pdf"),
+  paste0("plots/t_p_plus_c_half_max_vs_params_n=", n_param_sample, ".pdf"),
   dpi = 100,
   bg = "white"
 )
@@ -266,7 +266,7 @@ p_t_m_half_max_vs_params <- ggplot(
   facet_wrap(vars(param), scales = "free")
 ggsave(
   plot = p_t_m_half_max_vs_params,
-  paste0("plots/t_m_half_max_vs_params=", n_param_sample, ".pdf"),
+  paste0("plots/t_m_half_max_vs_params_n=", n_param_sample, ".pdf"),
   dpi = 100,
   bg = "white"
 )
@@ -280,7 +280,7 @@ p_p_plus_c_combined <- plot_grid(
 )
 ggsave(
   plot = p_p_plus_c_combined,
-  "plots/p_plus_c_combined.png",
+  paste0("plots/p_plus_c_combined_n=", n_param_sample, ".pdf"),
   dpi = 150,
   bg = "white",
   width = 23.3,
@@ -296,7 +296,7 @@ p_m_combined <- plot_grid(
 )
 ggsave(
   plot = p_m_combined,
-  "plots/m_combined.png",
+  paste0("plots/m_combined_n=", n_param_sample, ".pdf"),
   dpi = 150,
   bg = "white",
   width = 23.3,
