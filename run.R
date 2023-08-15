@@ -280,7 +280,7 @@ p_p_plus_c_combined <- plot_grid(
 )
 ggsave(
   plot = p_p_plus_c_combined,
-  paste0("plots/p_plus_c_combined_n=", n_param_sample, ".pdf"),
+  paste0("plots/p_plus_c_combined_n=", n_param_sample, ".png"),
   dpi = 150,
   bg = "white",
   width = 23.3,
@@ -296,7 +296,7 @@ p_m_combined <- plot_grid(
 )
 ggsave(
   plot = p_m_combined,
-  paste0("plots/m_combined_n=", n_param_sample, ".pdf"),
+  paste0("plots/m_combined_n=", n_param_sample, ".png"),
   dpi = 150,
   bg = "white",
   width = 23.3,
