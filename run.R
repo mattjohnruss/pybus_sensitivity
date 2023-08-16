@@ -55,12 +55,15 @@ gen_param_sample_sobol <- function(n_rep, min_max) {
 
 change <- 0.05
 param_min_max <- data.table(
-  param = c("k1", "k2",   "k3",  "k4",  "k5",   "k10", "k11",   "k17", "ks", "ku"), # nolint
-  mid   = c(0.21, 1.6634, 1.384, 2.314, 0.1365, 1.178, 0.18129, 0.1,   0.0,  3.1) # nolint
+  param = c(paste0("k", 1:22), "ks", "ku"),
+  mid = c(0.1, 1.0056, 2.6824, 2.8299, 0.2428, 1, 17.3, 0.165, 0.063, 1.2171,
+    0.4808, 0.001, 1, 0.001, 0.003, 1, 0.0705, 0.114, 3.7, 0.001, 1.8, 0.00138,
+    3.6244, 59.9707
+  )
 )
 param_min_max[, c("min", "max") := list((1.0 - change) * mid, (1.0 + change) * mid)] # nolint
-param_min_max[param == "ks", min := 0]
-param_min_max[param == "ks", max := 12]
+#param_min_max[param == "ks", min := 0]
+#param_min_max[param == "ks", max := 12]
 param_min_max[, mid := NULL]
 
 # Sobol
