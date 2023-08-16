@@ -135,6 +135,7 @@ ind <- sobol_indices(
   parallel = "multicore",
   ncpus = 8
 )
+ind$results[, parameters := factor(parameters, levels = parameters[1:24])]
 p_sobol_max_p_plus_c <- plot(ind)
 ggsave(
   plot = p_sobol_max_p_plus_c,
@@ -151,6 +152,7 @@ ind <- sobol_indices(
   parallel = "multicore",
   ncpus = 8
 )
+ind$results[, parameters := factor(parameters, levels = parameters[1:24])]
 p_sobol_max_m <- plot(ind)
 ggsave(
   plot = p_sobol_max_m,
@@ -167,6 +169,7 @@ ind <- sobol_indices(
   parallel = "multicore",
   ncpus = 8
 )
+ind$results[, parameters := factor(parameters, levels = parameters[1:24])]
 p_sobol_t_p_plus_c_half_max <- plot(ind)
 ggsave(
   plot = p_sobol_t_p_plus_c_half_max,
@@ -183,6 +186,7 @@ ind <- sobol_indices(
   parallel = "multicore",
   ncpus = 8
 )
+ind$results[, parameters := factor(parameters, levels = parameters[1:24])]
 p_sobol_t_m_half_max <- plot(ind)
 ggsave(
   plot = p_sobol_t_m_half_max,
