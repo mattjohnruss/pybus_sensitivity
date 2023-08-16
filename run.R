@@ -85,38 +85,34 @@ steady <- solutions[time == k_ts * k_phi_a, -"time"] %>%
     c("a_steady", "p_steady", "c_steady", "m_steady")
   )
 
-# Add the steady solutions, used for scaling unsteady solutions below
-solutions <- solutions[steady, on = c("rep")]
-
 # Find the max value of p + c after challenge, and the time
 s_max_p_plus_c <- solutions[
   solutions[time > k_ts * k_phi_a, .I[p + c == max(p + c)], by = rep]$V1
 ] %>%
-  .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = (p + c) / (p_steady + c_steady))]
+  .[, .(rep, t_max_p_plus_c = time, max_p_plus_c = (p + c) / (steady[rep == rep, p_steady + c_steady]))] # nolint
 
 # Find the max value of m after challenge, and the time
 s_max_m <- solutions[
   solutions[time > k_ts * k_phi_a, .I[m == max(m)], by = rep]$V1
 ] %>%
-  .[, .(rep, t_max_m = time, max_m = m / m_steady)]
-
-# Add the maxes (via chained joins) - these are qois but are also
-# needed for calculating the time to reach 1/2 max below
-solutions <- solutions[s_max_p_plus_c, on = "rep"] %>%
-  .[s_max_m, on = "rep"]
+  .[, .(rep, t_max_m = time, max_m = m / steady[rep == rep, m_steady])]
 
 # Calculate time p + c reaches 1/2 of its max, relative to its steady value
-t_p_plus_c_half_max <- solutions[time > t_max_p_plus_c, .SD, by = rep] %>%
+t_p_plus_c_half_max <- solutions[
+  time > s_max_p_plus_c[rep, t_max_p_plus_c],
+  .SD,
+  by = rep
+] %>%
   .[
-    ((p + c) - (p_steady + c_steady)) <= 0.5 * (max_p_plus_c - (p_steady + c_steady)), # nolint
+    ((p + c) - steady[rep, p_steady + c_steady]) <= 0.5 * (s_max_p_plus_c[rep, max_p_plus_c] - steady[rep, p_steady + c_steady]), # nolint
     first(.SD),
     by = rep
   ] %>%
   .[, .(rep, t_p_plus_c_half_max = time)]
 
 # Calculate time m reaches 1/2 of its max, relative to its steady value
-t_m_half_max <- solutions[time > t_max_m, .SD, by = rep] %>%
-  .[(m - m_steady) <= 0.5 * (max_m - m_steady), first(.SD), by = rep] %>%
+t_m_half_max <- solutions[time > s_max_m[rep, t_max_m], .SD, by = rep] %>%
+  .[(m - steady[rep, m_steady]) <= 0.5 * (s_max_m[rep, max_m] - steady[rep, m_steady]), first(.SD), by = rep] %>% # nolint
   .[, .(rep, t_m_half_max = time)]
 
 # Combine all qois into one data.table and join params
