@@ -81,7 +81,7 @@ void derivs(int *neq,
     }
 
     const double da_dt = k1 + (k_stim + k2 * a * c / (k3 + a * c)) * c * m * rhom / rhoa - k4 * ((rhop / rhoc) * p + c) * a - a;
-    const double dp_dt = k5 * (1 - p / k6) * (1 + k7 * a * p / (k8 + a * p)) * p + (k9 * rhoc / rhop) * c - k10 * p;
+    const double dp_dt = k5 * (1.0 - p / k6) * (1.0 + k7 * a * p / (k8 + a * p)) * p + (k9 * rhoc / rhop) * c - k10 * p;
     const double dc_dt = (k10 * rhoc / rhop) * p - k9 * c - (k11 * c - k12 * m / (k13 + m)) * c;
     const double dm_dt = (k14 + k15 * a * c / (k16 + a * c)) * rhoc * c / rhom + (k17 + k18 * a * p / (k19 + a * p)) * rhop * p / rhom + k20 * a / (k21 + a) - k22 * m;
 
