@@ -13,7 +13,11 @@ system("R CMD SHLIB eqns.c")
 dyn.load("eqns.so")
 
 solution_sample <- function(param_sample_dt) {
-  times <- seq(0, (100 + k_ts) * k_phi_a, length.out = 1001)
+  times <- unique(c(
+    seq(0, k_ts, length.out = 101),
+    seq(k_ts, (k_ts + k_tas), length.out = 2001)
+  )) * k_phi_a
+
   ics <- c(a = 0.19, p = 0.005, c = 0.07, m = 0.12)
 
   p <- as.list(as.data.table(t(param_sample_dt)))
@@ -51,7 +55,8 @@ gen_param_sample_sobol <- function(n_rep, min_max) {
 }
 
 # Fixed parameters
-k_ts <- 100.0
+k_ts <- 400.0
+k_tas <- 200.0
 k_phi_a <- 10.0
 
 # Varied parameters
@@ -80,9 +85,7 @@ param_sample_dt[, `:=`(k_ts = k_ts, k_phi_a = k_phi_a)]
 solutions <- solution_sample(param_sample_dt)
 param_sample_dt[, rep := seq_len(.N)]
 
-# Calculate the solution at steady state (assumed to be t = k_ts * k_phi_a, i.e.
-# just before challenge)
-steady <- solutions[time == k_ts * k_phi_a, -"time"] %>%
+steady <- solutions[time >= k_ts * k_phi_a, head(.SD, 1), by = rep][, -"time"] %>%
   setnames(
     c("a", "p", "c", "m"),
     c("a_steady", "p_steady", "c_steady", "m_steady")
