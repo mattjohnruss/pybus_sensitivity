@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <math.h>
 
-static double parameters[24];
+static double parameters[26];
 
 #define k1 parameters[0]
 #define k2 parameters[1]
@@ -28,10 +28,8 @@ static double parameters[24];
 #define k22 parameters[21]
 #define ks parameters[22]
 #define ku parameters[23]
-
-// define these globally so they can be used in `eqns` and the solver function
-static const double k_ts = 100.0;
-static const double k_phi_a = 10.0;
+#define k_ts parameters[24]
+#define k_phi_a parameters[25]
 
 // params with const values
 static const double rhoa = 0.01;
@@ -42,21 +40,21 @@ static const double rhom = 1.0;
 // 17, 18, etc in days
 // k_phia scaling from nondimensionalisation
 static const size_t n_ti = 10;
-static double ti[] = {
-    (17.0 + k_ts) * k_phi_a,
-    (18.0 + k_ts) * k_phi_a,
-    (19.0 + k_ts) * k_phi_a,
-    (20.0 + k_ts) * k_phi_a,
-    (21.0 + k_ts) * k_phi_a,
-    (22.0 + k_ts) * k_phi_a,
-    (24.0 + k_ts) * k_phi_a,
-    (26.0 + k_ts) * k_phi_a,
-    (28.0 + k_ts) * k_phi_a,
-    (33.0 + k_ts) * k_phi_a
+static double ti_raw[] = {
+    17.0,
+    18.0,
+    19.0,
+    20.0,
+    21.0,
+    22.0,
+    24.0,
+    26.0,
+    28.0,
+    33.0
 };
 
 void initmod(void (* odeparms)(int *, double *)) {
-    int n = 24;
+    int n = 26;
     odeparms(&n, parameters);
 }
 
@@ -76,8 +74,9 @@ void derivs(int *neq,
     double k_stim = 0.0;
 
     for (size_t i = 0; i < n_ti; ++i) {
-      k_stim = k_stim +
-        (ks / (ku * sqrt(2 * M_PI))) * exp(-0.5 * pow((time - ti[i]) / ku, 2));
+        const double ti = (ti_raw[i] + k_ts) * k_phi_a;
+        k_stim +=
+            (ks / (ku * sqrt(2 * M_PI))) * exp(-0.5 * pow((time - ti) / ku, 2));
     }
 
     const double da_dt = k1 + (k_stim + k2 * a * c / (k3 + a * c)) * c * m * rhom / rhoa - k4 * ((rhop / rhoc) * p + c) * a - a;

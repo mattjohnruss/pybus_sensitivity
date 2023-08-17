@@ -12,9 +12,6 @@ theme_set(theme_cowplot() + background_grid())
 system("R CMD SHLIB eqns.c")
 dyn.load("eqns.so")
 
-k_ts <- 100.0
-k_phi_a <- 10.0
-
 solution_sample <- function(param_sample_dt) {
   times <- seq(0, (100 + k_ts) * k_phi_a, length.out = 1001)
   ics <- c(a = 0.19, p = 0.005, c = 0.07, m = 0.12)
@@ -53,6 +50,11 @@ gen_param_sample_sobol <- function(n_rep, min_max) {
   data.table(param_sample)
 }
 
+# Fixed parameters
+k_ts <- 100.0
+k_phi_a <- 10.0
+
+# Varied parameters
 change <- 0.05
 param_min_max <- data.table(
   param = c(paste0("k", 1:22), "ks", "ku"),
@@ -72,6 +74,7 @@ param_min_max[, mid := NULL]
 # Generate random parameter samples
 n_param_sample <- 1000
 param_sample_dt <- gen_param_sample_sobol(n_param_sample, param_min_max)
+param_sample_dt[, `:=`(k_ts = k_ts, k_phi_a = k_phi_a)]
 
 # Compute solutions
 solutions <- solution_sample(param_sample_dt)
