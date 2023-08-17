@@ -127,6 +127,10 @@ qois <- s_max_p_plus_c[s_max_m, on = "rep"] %>%
   .[t_m_half_max, on = "rep"] %>%
   .[param_sample_dt, on = "rep"]
 
+if (!dir.exists("plots")) {
+  dir.create("plots")
+}
+
 # Indices for max(p + c)
 ind <- sobol_indices(
   Y = qois[, max_p_plus_c],
