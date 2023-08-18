@@ -226,7 +226,7 @@ ggsave(
 
 # Melt qois on the parameters (for plotting)
 qois_param_long <- melt(
-  qois,
+  qois[, -c("k_ts", "k_phi_a")],
   measure.vars = patterns("^k"),
   variable.name = "param",
   value.name = "param_value"
