@@ -133,7 +133,7 @@ if (!dir.exists("plots")) {
 
 # Indices for max(p + c)
 ind <- sobol_indices(
-  Y = qois[, max_p_plus_c],
+  Y = qois[, max_p_plus_c] - mean(qois[, max_p_plus_c]),
   N = n_param_sample,
   params = param_min_max[, param],
   boot = TRUE,
@@ -150,7 +150,7 @@ ggsave(
 
 # Indices for max(m)
 ind <- sobol_indices(
-  Y = qois[, max_m],
+  Y = qois[, max_m] - mean(qois[, max_m]),
   N = n_param_sample,
   params = param_min_max[, param],
   boot = TRUE,
@@ -167,7 +167,7 @@ ggsave(
 
 # Indices for time until half max(p + c)
 ind <- sobol_indices(
-  Y = qois[, t_p_plus_c_half_max],
+  Y = qois[, t_p_plus_c_half_max] - mean(qois[, t_p_plus_c_half_max]),
   N = n_param_sample,
   params = param_min_max[, param],
   boot = TRUE,
@@ -184,7 +184,7 @@ ggsave(
 
 # Indices for time until half max(m)
 ind <- sobol_indices(
-  Y = qois[, t_m_half_max],
+  Y = qois[, t_m_half_max] - mean(qois[, t_m_half_max]),
   N = n_param_sample,
   params = param_min_max[, param],
   boot = TRUE,
